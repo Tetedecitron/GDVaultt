@@ -80,6 +80,7 @@ nav{position:sticky;top:0;z-index:500;display:flex;align-items:stretch;height:52
 .de{background:#00cc6618;color:#009944;border:1px solid #00994430}.dm{background:#f5c40018;color:#a07800;border:1px solid #a0780030}
 .dh{background:#ff450018;color:var(--orange);border:1px solid #ff450030}.di{background:#8800ff15;color:#8822dd;border:1px solid #8822dd30}
 .dd{background:#cc110015;color:var(--red);border:1px solid #cc110030}
+.dxd{background:#8800001a;color:#ff0000;border:1px solid #ff000050;font-weight:700}
 .card-body{padding:14px 16px 18px}
 .card-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;color:var(--ink);line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:10px}
 .card-foot{display:flex;align-items:center;justify-content:space-between;gap:8px}
@@ -87,9 +88,9 @@ nav{position:sticky;top:0;z-index:500;display:flex;align-items:stretch;height:52
 .card-av{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--ink);object-fit:cover;flex-shrink:0}
 .card-aname{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .card-date{font-family:'DM Mono',monospace;font-size:.63rem;color:var(--muted);white-space:nowrap;flex-shrink:0}
-.delete-btn{position:absolute;top:8px;right:8px;width:26px;height:26px;background:#0a0a0ecc;border:1px solid #ff450060;color:var(--orange);font-size:.7rem;cursor:pointer;display:none;align-items:center;justify-content:center;transition:all .15s;z-index:10}
+.delete-btn{position:absolute;top:8px;right:8px;width:28px;height:28px;background:#0a0a0ecc;border:1px solid #ff450080;color:var(--orange);font-size:.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;z-index:10;opacity:0;pointer-events:none}
+.vcard:hover .delete-btn{opacity:1;pointer-events:all}
 .delete-btn:hover{background:var(--red);border-color:var(--red);color:#fff}
-.vcard:hover .delete-btn.visible{display:flex}
 
 /* MEMBERS */
 .members-outer{max-width:1280px;margin:0 auto;padding:28px}
@@ -97,12 +98,15 @@ nav{position:sticky;top:0;z-index:500;display:flex;align-items:stretch;height:52
 .members-search input{background:none;border:none;outline:none;font-family:'DM Mono',monospace;font-size:.8rem;color:var(--ink);width:100%;letter-spacing:.3px}
 .members-search input::placeholder{color:var(--muted)}
 .members-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1px;background:#1a1a2e18;border:1px solid #1a1a2e18}
-.mcard{background:var(--card);padding:20px;display:flex;flex-direction:column;align-items:center;gap:10px;cursor:pointer;transition:background .12s;text-align:center}
+.mcard{background:var(--card);padding:20px;display:flex;flex-direction:column;align-items:center;gap:10px;cursor:pointer;transition:background .12s;text-align:center;position:relative}
 .mcard:hover{background:#fff}
 .mcard-av{width:56px;height:56px;border-radius:50%;border:2px solid var(--ink);object-fit:cover}
 .mcard-av.owner-ring{border-color:var(--orange);box-shadow:0 0 0 2px var(--orange),0 0 12px #ff450030}
 .mcard-name{font-family:'DM Mono',monospace;font-size:.78rem;letter-spacing:1px;text-transform:uppercase;color:var(--ink);font-weight:500}
 .mcard-stat{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--muted)}
+.mdel-btn{position:absolute;top:8px;right:8px;width:22px;height:22px;background:none;border:1px solid #cc110040;color:var(--red);font-size:.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:all .15s}
+.mcard:hover .mdel-btn{opacity:1}
+.mdel-btn:hover{background:var(--red);color:#fff;border-color:var(--red)}
 
 /* EMPTY */
 .empty{grid-column:1/-1;padding:80px 20px;text-align:center}
@@ -204,7 +208,10 @@ nav{position:sticky;top:0;z-index:500;display:flex;align-items:stretch;height:52
   </a>
   <div class="nav-mid">
     <button class="nav-tab on" data-d="">Tous</button>
-    <button class="nav-tab" data-d="demon">Demon</button>
+    <button class="nav-tab" data-d="extremedemon">Extreme</button>
+    <button class="nav-tab" data-d="harddemon">Hard Demon</button>
+    <button class="nav-tab" data-d="mediumdemon">Medium Demon</button>
+    <button class="nav-tab" data-d="easydemon">Easy Demon</button>
     <button class="nav-tab" data-d="insane">Insane</button>
     <button class="nav-tab" data-d="hard">Hard</button>
     <button class="nav-tab" data-d="medium">Medium</button>
@@ -251,11 +258,14 @@ nav{position:sticky;top:0;z-index:500;display:flex;align-items:stretch;height:52
     <div class="toolbar-inner">
       <span class="tb-label">Filtre</span>
       <button class="fb on" data-d="">Tout</button>
-      <button class="fb" data-d="demon">Demon</button>
+      <button class="fb" data-d="extremedemon">Extreme Demon</button>
+      <button class="fb" data-d="harddemon">Hard Demon</button>
+      <button class="fb" data-d="mediumdemon">Medium Demon</button>
+      <button class="fb" data-d="easydemon">Easy Demon</button>
       <button class="fb" data-d="insane">Insane</button>
-      <button class="fb" data-d="hard">Hard</button>
-      <button class="fb" data-d="medium">Medium</button>
-      <button class="fb" data-d="easy">Easy</button>
+      <button class="fb" data-d="hard">Harder</button>
+      <button class="fb" data-d="medium">Hard</button>
+      <button class="fb" data-d="easy">Easy/Normal</button>
       <div class="tb-right">
         <div class="search-box">
           <span class="search-ico">⌕</span>
@@ -354,8 +364,15 @@ nav{position:sticky;top:0;z-index:500;display:flex;align-items:stretch;height:52
       <div class="field">
         <label>Difficulté</label>
         <select id="uDiff">
-          <option value="easy">Easy / Normal</option><option value="medium">Hard / Harder</option>
-          <option value="hard">Insane</option><option value="insane" selected>Extreme Demon</option><option value="demon">Demon</option>
+          <option value="easy">Easy</option>
+          <option value="normal">Normal</option>
+          <option value="medium">Hard</option>
+          <option value="hard">Harder</option>
+          <option value="insane">Insane</option>
+          <option value="easydemon">Easy Demon</option>
+          <option value="mediumdemon">Medium Demon</option>
+          <option value="harddemon">Hard Demon</option>
+          <option value="extremedemon" selected>Extreme Demon</option>
         </select>
       </div>
       <div class="field"><label>Note (optionnel)</label><textarea id="uDesc" placeholder="Tentatives, setup…"></textarea></div>
@@ -398,8 +415,8 @@ nav{position:sticky;top:0;z-index:500;display:flex;align-items:stretch;height:52
 
 <script>
 const BACKEND = window.location.origin;
-const DIFF_CLS  = {easy:'de',medium:'dm',hard:'dh',insane:'di',demon:'dd'};
-const DIFF_NAME = {easy:'Easy',medium:'Medium',hard:'Hard',insane:'Insane',demon:'Demon'};
+const DIFF_CLS  = {easy:'de',normal:'de',medium:'dm',hard:'dh',harder:'dh',insane:'di',harddemon:'dd',easydemon:'dd',mediumdemon:'dd',demon:'dd',harddemon:'dd',extremedemon:'dxd',extreme_demon:'dxd'};
+const DIFF_NAME = {easy:'Easy',normal:'Normal',medium:'Hard',hard:'Harder',harder:'Harder',insane:'Insane',easydemon:'Easy Demon',mediumdemon:'Medium Demon',harddemon:'Hard Demon',demon:'Demon',extremedemon:'Extreme Demon',extreme_demon:'Extreme Demon'};
 const OWNER = 'Tetedecitron';
 
 let user=null, token=null, videos=[], members=[], activeFilter='', pickedFile=null;
@@ -557,7 +574,7 @@ function render(){
     const av=v.authorAvatar||`https://api.dicebear.com/7.x/pixel-art/svg?seed=${v.author}`;
     const role=v.authorRole||(v.author===OWNER?'owner':'member');
     const tagHtml=role==='owner'?`<span class="tag tag-owner">Owner</span>`:'';
-    const delBtn=canDelete(v)?`<button class="delete-btn visible" onclick="event.stopPropagation();deleteVideo('${v._id||v.id}',this)" title="Supprimer">✕</button>`:'';
+    const delBtn=canDelete(v)?`<button class="delete-btn" onclick="event.stopPropagation();deleteVideo('${v._id||v.id}',this)" title="Supprimer">✕</button>`:'';
     return `<div class="vcard" onclick="openViewer('${v._id||v.id}')">
       ${delBtn}
       <div class="card-thumb">
@@ -630,7 +647,9 @@ function renderMembers(){
     const role=m.role||(m.login===OWNER?'owner':'member');
     const ringClass=role==='owner'?'owner-ring':'';
     const tagHtml=role==='owner'?`<span class="tag tag-owner">Owner</span>`:`<span class="tag tag-member">Member</span>`;
+    const delBtn=(user?.role==='owner' && m.login!==OWNER)?`<button class="mdel-btn" onclick="event.stopPropagation();deleteMember('${m.login}')" title="Supprimer">✕</button>`:'';
     return `<div class="mcard" onclick="openProfile('${m.login}')">
+      ${delBtn}
       <img class="mcard-av ${ringClass}" src="${m.avatar_url||`https://api.dicebear.com/7.x/pixel-art/svg?seed=${m.login}`}" alt=""/>
       <div class="mcard-name">${m.login}</div>
       ${tagHtml}
@@ -669,7 +688,18 @@ async function openProfile(login){
     }).join('');
   }catch{pvids.innerHTML='<div class="pvid-empty">Impossible de charger.</div>';}
 }
-function closeProfile(){document.getElementById('profileOvl').classList.remove('on');}
+async function deleteMember(login){
+  if(!confirm(`Supprimer le compte de ${login} et toutes ses vidéos ?`)) return;
+  try{
+    const r=await fetch(`${BACKEND}/api/members/${login}`,{method:'DELETE',headers:authHeaders()});
+    if(!r.ok){ const d=await r.json(); toast(d.error||'Erreur','err'); return; }
+    members=members.filter(m=>m.login!==login);
+    videos=videos.filter(v=>v.author!==login);
+    renderMembers(); render(); updateStats();
+    toast(`${login} supprimé`,'ok');
+  }catch{ toast('Erreur réseau','err'); }
+}
+
 
 // ── UPLOAD ────────────────────────────────────────────────
 function openUpload(){if(!user){openAuth();return;}document.getElementById('uploadOvl').classList.add('on');}
