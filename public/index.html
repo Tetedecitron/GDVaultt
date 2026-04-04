@@ -1,1 +1,751 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>GDVault</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Syne:wght@400;700;800&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--ink:#0a0a0e;--paper:#f0ede4;--card:#faf9f3;--orange:#ff4500;--muted:#8a8a7a;--red:#cc1100;--grey:#f5f4ef;--green:#009944}
+html{scroll-behavior:smooth}
+body{font-family:'Syne',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh}
+body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");pointer-events:none;z-index:9998;opacity:.7;mix-blend-mode:multiply}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--paper)}::-webkit-scrollbar-thumb{background:var(--ink)}
 
+/* NAV */
+nav{position:sticky;top:0;z-index:500;display:flex;align-items:stretch;height:52px;background:var(--ink);border-bottom:2px solid var(--orange)}
+.nav-logo{display:flex;align-items:center;gap:10px;padding:0 22px;border-right:1px solid #ffffff15;text-decoration:none;font-family:'Bebas Neue',sans-serif;font-size:1.55rem;letter-spacing:4px;color:var(--paper);flex-shrink:0}
+.logo-hex{width:26px;height:26px;background:var(--orange);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)}
+.nav-mid{display:flex;align-items:stretch;flex:1;overflow-x:auto}.nav-mid::-webkit-scrollbar{display:none}
+.nav-tab{display:flex;align-items:center;padding:0 16px;font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:1.5px;text-transform:uppercase;color:#ffffff50;background:none;border:none;cursor:pointer;border-right:1px solid #ffffff0a;white-space:nowrap;border-bottom:2px solid transparent;transition:color .12s,border-color .12s}
+.nav-tab:hover{color:#ffffff90}.nav-tab.on{color:var(--orange);border-bottom-color:var(--orange)}
+.nav-end{margin-left:auto;display:flex;align-items:stretch;border-left:1px solid #ffffff15;flex-shrink:0}
+#navLoginBtn{display:flex;align-items:center;padding:0 22px;font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--paper);background:none;border:none;cursor:pointer;transition:background .12s;white-space:nowrap}
+#navLoginBtn:hover{background:#ffffff0d}
+.nav-user{display:none;align-items:stretch}
+.nav-upload{display:flex;align-items:center;gap:9px;padding:0 20px;background:var(--orange);border:none;cursor:pointer;font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:1.5px;text-transform:uppercase;color:#fff;transition:opacity .12s;white-space:nowrap}
+.nav-upload:hover{opacity:.88}
+.nav-profile{display:flex;align-items:center;gap:10px;padding:0 18px;border-left:1px solid #ffffff15;cursor:pointer;transition:background .12s}
+.nav-profile:hover{background:#ffffff0a}
+.nav-profile img{width:26px;height:26px;border-radius:50%;border:2px solid var(--orange);object-fit:cover}
+.nav-profile span{font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:1px;color:var(--paper);text-transform:uppercase;white-space:nowrap}
+
+/* TAGS */
+.tag{display:inline-flex;align-items:center;padding:2px 8px;font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:1.5px;text-transform:uppercase;border-radius:2px}
+.tag-owner{background:#ff450022;color:var(--orange);border:1px solid #ff450050}
+.tag-member{background:#1a1a2e12;color:var(--muted);border:1px solid #1a1a2e22}
+
+/* HERO */
+.hero{max-width:1280px;margin:0 auto;padding:56px 28px 36px;display:grid;grid-template-columns:1fr auto;align-items:end;gap:40px}
+.hero-tag{display:inline-flex;align-items:center;gap:10px;font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:3px;text-transform:uppercase;color:var(--orange);margin-bottom:18px}
+.hero-tag::before{content:'';width:28px;height:2px;background:var(--orange)}
+.hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(3.8rem,8vw,7.5rem);line-height:.92;letter-spacing:1px;color:var(--ink)}
+.hero h1 .outline{-webkit-text-stroke:2px var(--ink);color:transparent}
+.hero-desc{margin-top:22px;font-family:'DM Mono',monospace;font-size:.78rem;color:var(--muted);line-height:1.8;max-width:400px;letter-spacing:.3px}
+.hero-stats{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.stat-row{text-align:right}.stat-n{font-family:'Bebas Neue',sans-serif;font-size:3.5rem;line-height:1;color:var(--ink)}.stat-l{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.stat-sep{width:48px;height:1px;background:#1a1a2e20;align-self:flex-end;margin:4px 0}
+
+/* PAGE TABS */
+.page-tabs{border-bottom:1px solid #1a1a2e18}.page-tabs-inner{max-width:1280px;margin:0 auto;padding:0 28px;display:flex;align-items:stretch;height:44px}
+.ptab{height:44px;padding:0 18px;font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:1.5px;text-transform:uppercase;background:none;border:none;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .12s}
+.ptab:hover{color:var(--ink)}.ptab.on{color:var(--orange);border-bottom-color:var(--orange)}
+
+/* TOOLBAR */
+.toolbar{border-bottom:1px solid #1a1a2e18}
+.toolbar-inner{max-width:1280px;margin:0 auto;padding:0 28px;display:flex;align-items:center;height:44px;gap:0}
+.tb-label{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding-right:16px;border-right:1px solid #1a1a2e18;margin-right:4px;flex-shrink:0}
+.fb{height:44px;padding:0 14px;font-family:'DM Mono',monospace;font-size:.67rem;letter-spacing:1px;text-transform:uppercase;background:none;border:none;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .12s;white-space:nowrap}
+.fb:hover{color:var(--ink)}.fb.on{color:var(--orange);border-bottom-color:var(--orange)}
+.tb-right{margin-left:auto;display:flex;align-items:center}
+.search-box{display:flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #1a1a2e20;background:#1a1a2e06}
+.search-box input{background:none;border:none;outline:none;font-family:'DM Mono',monospace;font-size:.73rem;color:var(--ink);width:180px;letter-spacing:.3px}
+.search-box input::placeholder{color:var(--muted)}
+.search-ico{font-size:.8rem;color:var(--muted)}
+
+/* VIDEO GRID */
+.grid-outer{max-width:1280px;margin:0 auto;padding:28px}
+.vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:1px;background:#1a1a2e1a;border:1px solid #1a1a2e1a}
+.vcard{background:var(--card);cursor:pointer;transition:background .12s;position:relative}
+.vcard:hover{background:#fff}.vcard:hover .card-overlay{opacity:1}
+.card-thumb{aspect-ratio:16/9;background:var(--ink);position:relative;overflow:hidden}
+.card-thumb video{width:100%;height:100%;object-fit:cover;display:block}
+.card-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#0a0a0e80;opacity:0;transition:opacity .18s}
+.play-tri{width:0;height:0;border-left:22px solid #fff;border-top:14px solid transparent;border-bottom:14px solid transparent;margin-left:6px}
+.thumb-blank{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--ink)}
+.thumb-blank svg{opacity:.25}
+.diff-pill{position:absolute;top:10px;left:10px;padding:3px 9px;font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:1px;text-transform:uppercase}
+.de{background:#00cc6618;color:#009944;border:1px solid #00994430}.dm{background:#f5c40018;color:#a07800;border:1px solid #a0780030}
+.dh{background:#ff450018;color:var(--orange);border:1px solid #ff450030}.di{background:#8800ff15;color:#8822dd;border:1px solid #8822dd30}
+.dd{background:#cc110015;color:var(--red);border:1px solid #cc110030}
+.card-body{padding:14px 16px 18px}
+.card-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;color:var(--ink);line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:10px}
+.card-foot{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.card-author{display:flex;align-items:center;gap:7px;min-width:0;overflow:hidden}
+.card-av{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--ink);object-fit:cover;flex-shrink:0}
+.card-aname{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-date{font-family:'DM Mono',monospace;font-size:.63rem;color:var(--muted);white-space:nowrap;flex-shrink:0}
+.delete-btn{position:absolute;top:8px;right:8px;width:26px;height:26px;background:#0a0a0ecc;border:1px solid #ff450060;color:var(--orange);font-size:.7rem;cursor:pointer;display:none;align-items:center;justify-content:center;transition:all .15s;z-index:10}
+.delete-btn:hover{background:var(--red);border-color:var(--red);color:#fff}
+.vcard:hover .delete-btn.visible{display:flex}
+
+/* MEMBERS */
+.members-outer{max-width:1280px;margin:0 auto;padding:28px}
+.members-search{display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid #1a1a2e20;background:#fff;margin-bottom:20px;max-width:380px}
+.members-search input{background:none;border:none;outline:none;font-family:'DM Mono',monospace;font-size:.8rem;color:var(--ink);width:100%;letter-spacing:.3px}
+.members-search input::placeholder{color:var(--muted)}
+.members-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1px;background:#1a1a2e18;border:1px solid #1a1a2e18}
+.mcard{background:var(--card);padding:20px;display:flex;flex-direction:column;align-items:center;gap:10px;cursor:pointer;transition:background .12s;text-align:center}
+.mcard:hover{background:#fff}
+.mcard-av{width:56px;height:56px;border-radius:50%;border:2px solid var(--ink);object-fit:cover}
+.mcard-av.owner-ring{border-color:var(--orange);box-shadow:0 0 0 2px var(--orange),0 0 12px #ff450030}
+.mcard-name{font-family:'DM Mono',monospace;font-size:.78rem;letter-spacing:1px;text-transform:uppercase;color:var(--ink);font-weight:500}
+.mcard-stat{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--muted)}
+
+/* EMPTY */
+.empty{grid-column:1/-1;padding:80px 20px;text-align:center}
+.empty-shape{width:60px;height:60px;background:var(--ink);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);margin:0 auto 20px;display:grid;place-items:center;color:var(--paper);font-size:1.2rem}
+.empty h3{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:3px;color:var(--ink);margin-bottom:8px}
+.empty p{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--muted);letter-spacing:.5px}
+
+/* OVERLAYS */
+.ovl{position:fixed;inset:0;z-index:800;background:#0a0a0ec8;backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:20px}
+.ovl.on{display:flex}
+@keyframes pop{from{opacity:0;transform:scale(.94) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+
+/* AUTH MODAL */
+.auth-box{width:100%;max-width:420px;background:var(--paper);border:2px solid var(--ink);box-shadow:5px 5px 0 var(--orange);animation:pop .22s cubic-bezier(.34,1.56,.64,1)}
+.modal-hd{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;background:var(--ink);border-bottom:2px solid var(--orange)}
+.modal-hd-title{font-family:'Bebas Neue',sans-serif;font-size:1.25rem;letter-spacing:3px;color:var(--paper)}
+.modal-close{width:28px;height:28px;background:none;border:1px solid #ffffff25;color:#ffffff70;font-size:.9rem;cursor:pointer;display:grid;place-items:center;font-family:'DM Mono',monospace;transition:all .12s}
+.modal-close:hover{border-color:var(--orange);color:var(--orange)}
+.auth-body{padding:28px}
+.auth-tabs{display:flex;margin-bottom:24px;border:1px solid #1a1a2e20}
+.auth-tab{flex:1;padding:10px;font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:1.5px;text-transform:uppercase;background:none;border:none;cursor:pointer;color:var(--muted);transition:all .12s}
+.auth-tab.on{background:var(--ink);color:var(--paper)}
+.auth-panel{display:none}.auth-panel.on{display:block}
+.afield{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.afield label{font-family:'DM Mono',monospace;font-size:.63rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.afield input{background:#fff;border:1.5px solid #1a1a2e25;padding:10px 12px;outline:none;font-family:'Syne',sans-serif;font-size:.9rem;color:var(--ink);transition:border-color .15s;width:100%}
+.afield input:focus{border-color:var(--ink)}
+.afield .err{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--red);margin-top:4px;display:none}
+.afield .err.on{display:block}
+.auth-btn{width:100%;padding:13px;background:var(--ink);border:2px solid var(--ink);color:var(--paper);font-family:'DM Mono',monospace;font-size:.76rem;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .15s;box-shadow:3px 3px 0 var(--orange);margin-bottom:12px}
+.auth-btn:hover{background:var(--orange);border-color:var(--orange);box-shadow:3px 3px 0 var(--ink)}
+.auth-btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+.auth-divider{display:flex;align-items:center;gap:12px;margin:16px 0}
+.auth-divider span{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;white-space:nowrap}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:#1a1a2e20}
+.gh-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:12px;padding:12px 20px;background:#fff;border:1.5px solid #1a1a2e25;color:var(--ink);font-family:'DM Mono',monospace;font-size:.73rem;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:all .15s}
+.gh-btn:hover{border-color:var(--ink);background:var(--grey)}
+.login-note{text-align:center;font-family:'DM Mono',monospace;font-size:.65rem;color:var(--muted);letter-spacing:.5px;margin-top:14px}
+
+/* UPLOAD */
+.upload-box{width:100%;max-width:490px;background:var(--paper);border:2px solid var(--ink);box-shadow:5px 5px 0 var(--orange);animation:pop .22s cubic-bezier(.34,1.56,.64,1)}
+.um-body{padding:26px 28px;display:flex;flex-direction:column;gap:18px}
+.drop-zone{border:2px dashed #1a1a2e35;padding:34px 20px;text-align:center;cursor:pointer;position:relative;transition:all .18s}
+.drop-zone:hover,.drop-zone.over{border-color:var(--orange);background:#ff45000a}
+.drop-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.dz-ico{font-size:2rem;margin-bottom:10px}.dz-main{font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:1px;text-transform:uppercase;color:var(--ink);margin-bottom:4px}.dz-hint{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--muted)}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.field input,.field select,.field textarea{background:#fff;border:1.5px solid #1a1a2e25;padding:10px 12px;outline:none;font-family:'Syne',sans-serif;font-size:.9rem;color:var(--ink);transition:border-color .15s;width:100%}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--ink)}
+.field textarea{resize:vertical;min-height:68px}
+.prog-wrap{height:3px;background:#1a1a2e15;display:none}.prog-bar{height:100%;background:var(--orange);width:0;transition:width .25s}
+.submit-btn{width:100%;padding:13px;background:var(--ink);border:2px solid var(--ink);color:var(--paper);font-family:'DM Mono',monospace;font-size:.76rem;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .15s;box-shadow:3px 3px 0 var(--orange)}
+.submit-btn:hover{background:var(--orange);border-color:var(--orange);box-shadow:3px 3px 0 var(--ink)}
+.submit-btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+
+/* VIEWER */
+.viewer-ovl{position:fixed;inset:0;z-index:900;background:#0a0a0ef2;backdrop-filter:blur(12px);display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+.viewer-ovl.on{display:flex}
+.viewer-wrap{width:100%;max-width:880px;border:2px solid var(--orange);background:#000;animation:pop .2s ease}
+.viewer-top{display:flex;align-items:center;justify-content:space-between;padding:10px 15px;background:var(--ink);border-bottom:1px solid #ff450030}
+.viewer-ttl{font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:2px;color:var(--paper);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:700px}
+#mainVid{width:100%;aspect-ratio:16/9;display:block;background:#000}
+.viewer-bot{display:flex;align-items:center;justify-content:space-between;padding:9px 15px;background:var(--ink);border-top:1px solid #ffffff0a}
+.viewer-meta{display:flex;align-items:center;gap:14px;font-family:'DM Mono',monospace;font-size:.67rem;letter-spacing:1px;text-transform:uppercase;color:#ffffff55}
+.vmeta-dot{width:3px;height:3px;background:#ff450060;border-radius:50%}
+
+/* PROFILE */
+.profile-box{width:100%;max-width:460px;background:var(--paper);border:2px solid var(--ink);box-shadow:5px 5px 0 var(--orange);animation:pop .22s cubic-bezier(.34,1.56,.64,1)}
+.profile-head{padding:24px 28px;display:flex;align-items:center;gap:18px;border-bottom:1px solid #1a1a2e18}
+.profile-av{width:64px;height:64px;border-radius:50%;border:2px solid var(--ink);object-fit:cover}
+.profile-av.owner-ring{border-color:var(--orange);box-shadow:0 0 0 2px var(--orange)}
+.profile-info h3{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:2px;color:var(--ink)}
+.profile-info .since{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--muted);letter-spacing:1px;margin-top:6px}
+.profile-vids{padding:20px 28px}
+.profile-vids-title{font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+.pvid-list{display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto}
+.pvid-item{display:flex;align-items:center;gap:12px;padding:10px;background:var(--grey);cursor:pointer;transition:background .12s}
+.pvid-item:hover{background:#fff}
+.pvid-thumb{width:64px;height:36px;background:var(--ink);flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.pvid-thumb video{width:100%;height:100%;object-fit:cover}
+.pvid-info{flex:1;min-width:0}
+.pvid-title{font-family:'Syne',sans-serif;font-size:.82rem;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pvid-diff{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.pvid-empty{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);text-align:center;padding:20px}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;z-index:9999;padding:11px 18px;background:var(--ink);border-left:3px solid var(--orange);font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:1px;color:var(--paper);text-transform:uppercase;transform:translateY(70px);opacity:0;pointer-events:none;transition:all .22s cubic-bezier(.34,1.56,.64,1)}
+.toast.on{transform:translateY(0);opacity:1}.toast.ok{border-color:var(--green)}.toast.err{border-color:var(--red)}
+
+@media(max-width:680px){.hero{grid-template-columns:1fr}.hero-stats{flex-direction:row;align-items:flex-end;gap:24px}.hero h1{font-size:3.6rem}}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="#">
+    <div class="logo-hex"></div>GDVAULT
+  </a>
+  <div class="nav-mid">
+    <button class="nav-tab on" data-d="">Tous</button>
+    <button class="nav-tab" data-d="demon">Demon</button>
+    <button class="nav-tab" data-d="insane">Insane</button>
+    <button class="nav-tab" data-d="hard">Hard</button>
+    <button class="nav-tab" data-d="medium">Medium</button>
+    <button class="nav-tab" data-d="easy">Easy</button>
+  </div>
+  <div class="nav-end">
+    <button id="navLoginBtn" onclick="openAuth()">Connexion</button>
+    <div class="nav-user" id="navUser">
+      <button class="nav-upload" onclick="openUpload()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Upload
+      </button>
+      <div class="nav-profile" onclick="confirmLogout()">
+        <img id="navAv" src="" alt=""/>
+        <span id="navName"></span>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="hero">
+  <div>
+    <div class="hero-tag">Archive communautaire</div>
+    <h1>GEO<br/>METRY<br/>DASH <span class="outline">VAULT</span></h1>
+    <p class="hero-desc">Archive de runs, completions et records. Parcours librement — connecte-toi pour uploader.</p>
+  </div>
+  <div class="hero-stats">
+    <div class="stat-row"><div class="stat-n" id="statV">0</div><div class="stat-l">Vidéos</div></div>
+    <div class="stat-sep"></div>
+    <div class="stat-row"><div class="stat-n" id="statU">0</div><div class="stat-l">Joueurs</div></div>
+  </div>
+</div>
+
+<div class="page-tabs">
+  <div class="page-tabs-inner">
+    <button class="ptab on" onclick="showPage('videos',this)">Vidéos</button>
+    <button class="ptab" onclick="showPage('members',this)">Membres</button>
+  </div>
+</div>
+
+<!-- VIDEOS PAGE -->
+<div id="pageVideos">
+  <div class="toolbar">
+    <div class="toolbar-inner">
+      <span class="tb-label">Filtre</span>
+      <button class="fb on" data-d="">Tout</button>
+      <button class="fb" data-d="demon">Demon</button>
+      <button class="fb" data-d="insane">Insane</button>
+      <button class="fb" data-d="hard">Hard</button>
+      <button class="fb" data-d="medium">Medium</button>
+      <button class="fb" data-d="easy">Easy</button>
+      <div class="tb-right">
+        <div class="search-box">
+          <span class="search-ico">⌕</span>
+          <input id="searchIn" type="text" placeholder="Rechercher un niveau…"/>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="grid-outer"><div class="vgrid" id="vgrid"></div></div>
+</div>
+
+<!-- MEMBERS PAGE -->
+<div id="pageMembers" style="display:none">
+  <div class="members-outer">
+    <div class="members-search">
+      <span class="search-ico">⌕</span>
+      <input type="text" id="memberSearch" placeholder="Rechercher un joueur…" oninput="searchMembers()"/>
+    </div>
+    <div class="members-grid" id="mgrid"></div>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div class="ovl" id="authOvl">
+  <div class="auth-box">
+    <div class="modal-hd">
+      <span class="modal-hd-title" id="authTitle">CONNEXION</span>
+      <button class="modal-close" onclick="closeAuth()">✕</button>
+    </div>
+    <div class="auth-body">
+      <div class="auth-tabs">
+        <button class="auth-tab on" onclick="switchAuthTab('login',this)">Se connecter</button>
+        <button class="auth-tab" onclick="switchAuthTab('register',this)">Créer un compte</button>
+      </div>
+
+      <!-- LOGIN -->
+      <div class="auth-panel on" id="panelLogin">
+        <div class="afield">
+          <label>Pseudo ou email</label>
+          <input type="text" id="loginUser" placeholder="ex: Tetedecitron" autocomplete="username"/>
+          <div class="err" id="loginErr"></div>
+        </div>
+        <div class="afield">
+          <label>Mot de passe</label>
+          <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password"/>
+        </div>
+        <button class="auth-btn" id="loginBtn" onclick="doLogin()">Se connecter</button>
+        <div class="auth-divider"><span>ou</span></div>
+        <button class="gh-btn" onclick="loginGitHub()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+          Continuer avec GitHub
+        </button>
+        <p class="login-note">Tu peux parcourir les vidéos sans compte.</p>
+      </div>
+
+      <!-- REGISTER -->
+      <div class="auth-panel" id="panelRegister">
+        <div class="afield">
+          <label>Pseudo</label>
+          <input type="text" id="regLogin" placeholder="ex: CubeMaster42" autocomplete="username"/>
+          <div class="err" id="regLoginErr"></div>
+        </div>
+        <div class="afield">
+          <label>Email</label>
+          <input type="email" id="regEmail" placeholder="ex: you@email.com" autocomplete="email"/>
+          <div class="err" id="regEmailErr"></div>
+        </div>
+        <div class="afield">
+          <label>Mot de passe</label>
+          <input type="password" id="regPass" placeholder="6 caractères min" autocomplete="new-password"/>
+          <div class="err" id="regPassErr"></div>
+        </div>
+        <button class="auth-btn" id="regBtn" onclick="doRegister()">Créer le compte</button>
+        <div class="auth-divider"><span>ou</span></div>
+        <button class="gh-btn" onclick="loginGitHub()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+          Continuer avec GitHub
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- UPLOAD OVERLAY -->
+<div class="ovl" id="uploadOvl">
+  <div class="upload-box">
+    <div class="modal-hd"><span class="modal-hd-title">UPLOADER UN RUN</span><button class="modal-close" onclick="closeUpload()">✕</button></div>
+    <div class="um-body">
+      <div class="drop-zone" id="dz">
+        <input type="file" id="fileIn" accept="video/*" onchange="onFile(this)"/>
+        <div class="dz-ico" id="dzIco">🎬</div>
+        <div class="dz-main" id="dzMain">Glisse ta vidéo ici</div>
+        <div class="dz-hint" id="dzHint">MP4 · MOV · WebM · 500 MB max</div>
+      </div>
+      <div class="field"><label>Titre du niveau</label><input type="text" id="uTitle" placeholder="ex: Bloodbath 100%"/></div>
+      <div class="field">
+        <label>Difficulté</label>
+        <select id="uDiff">
+          <option value="easy">Easy / Normal</option><option value="medium">Hard / Harder</option>
+          <option value="hard">Insane</option><option value="insane" selected>Extreme Demon</option><option value="demon">Demon</option>
+        </select>
+      </div>
+      <div class="field"><label>Note (optionnel)</label><textarea id="uDesc" placeholder="Tentatives, setup…"></textarea></div>
+      <div class="prog-wrap" id="progWrap"><div class="prog-bar" id="progBar"></div></div>
+      <button class="submit-btn" id="subBtn" onclick="doUpload()">Publier le run</button>
+    </div>
+  </div>
+</div>
+
+<!-- VIEWER -->
+<div class="viewer-ovl" id="viewerOvl">
+  <div class="viewer-wrap">
+    <div class="viewer-top"><span class="viewer-ttl" id="vTtl"></span><button class="modal-close" onclick="closeViewer()">✕</button></div>
+    <video id="mainVid" controls></video>
+    <div class="viewer-bot">
+      <div class="viewer-meta"><span id="vAuthor"></span><div class="vmeta-dot"></div><span id="vDate"></span><div class="vmeta-dot"></div><span id="vDiff"></span></div>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE OVERLAY -->
+<div class="ovl" id="profileOvl">
+  <div class="profile-box">
+    <div class="modal-hd"><span class="modal-hd-title" id="profileTitle">PROFIL</span><button class="modal-close" onclick="closeProfile()">✕</button></div>
+    <div class="profile-head">
+      <img class="profile-av" id="profileAv" src="" alt=""/>
+      <div class="profile-info">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><h3 id="profileName"></h3><span class="tag" id="profileTag"></span></div>
+        <div class="since" id="profileSince"></div>
+      </div>
+    </div>
+    <div class="profile-vids">
+      <div class="profile-vids-title" id="profileVidsTitle">Runs uploadés</div>
+      <div class="pvid-list" id="pvids"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const BACKEND = window.location.origin;
+const DIFF_CLS  = {easy:'de',medium:'dm',hard:'dh',insane:'di',demon:'dd'};
+const DIFF_NAME = {easy:'Easy',medium:'Medium',hard:'Hard',insane:'Insane',demon:'Demon'};
+const OWNER = 'Tetedecitron';
+
+let user=null, token=null, videos=[], members=[], activeFilter='', pickedFile=null;
+
+// ── INIT ──────────────────────────────────────────────────
+(async()=>{
+  const p = new URLSearchParams(location.search);
+  if(p.get('token')){
+    token = p.get('token');
+    try{ user = JSON.parse(decodeURIComponent(p.get('user'))); }catch{}
+    localStorage.setItem('gdv_token', token);
+    localStorage.setItem('gdv_u', JSON.stringify(user));
+    history.replaceState({},'','/');
+  }
+  if(p.get('error')){ toast('Erreur de connexion GitHub','err'); history.replaceState({},'','/'); }
+  if(!token){ token=localStorage.getItem('gdv_token'); }
+  if(!user){ try{ const s=localStorage.getItem('gdv_u'); if(s) user=JSON.parse(s); }catch{} }
+  applyAuth();
+  await loadVideos();
+})();
+
+// ── AUTH HELPERS ─────────────────────────────────────────
+function authHeaders(){ return token?{Authorization:`Bearer ${token}`}:{}; }
+
+function setSession(u, t){
+  user=u; token=t;
+  localStorage.setItem('gdv_u', JSON.stringify(u));
+  localStorage.setItem('gdv_token', t);
+  applyAuth();
+}
+
+function applyAuth(){
+  const lb=document.getElementById('navLoginBtn');
+  const nu=document.getElementById('navUser');
+  if(user){
+    lb.style.display='none'; nu.style.display='flex';
+    document.getElementById('navAv').src=user.avatar_url||`https://api.dicebear.com/7.x/pixel-art/svg?seed=${user.login}`;
+    document.getElementById('navName').textContent=user.login;
+  } else {
+    lb.style.display='flex'; nu.style.display='none';
+  }
+}
+
+function confirmLogout(){
+  if(!confirm(`Déconnecter ${user.login} ?`))return;
+  user=null; token=null;
+  localStorage.removeItem('gdv_u'); localStorage.removeItem('gdv_token');
+  applyAuth(); toast('Déconnecté');
+}
+
+// ── AUTH MODAL ────────────────────────────────────────────
+function openAuth(){ document.getElementById('authOvl').classList.add('on'); }
+function closeAuth(){ document.getElementById('authOvl').classList.remove('on'); clearAuthErrors(); }
+
+function switchAuthTab(tab, btn){
+  document.querySelectorAll('.auth-tab').forEach(b=>b.classList.remove('on')); btn.classList.add('on');
+  document.getElementById('panelLogin').classList.toggle('on', tab==='login');
+  document.getElementById('panelRegister').classList.toggle('on', tab==='register');
+  document.getElementById('authTitle').textContent = tab==='login'?'CONNEXION':'CRÉER UN COMPTE';
+  clearAuthErrors();
+}
+
+function clearAuthErrors(){
+  document.querySelectorAll('.err').forEach(e=>{e.classList.remove('on');e.textContent='';});
+}
+
+function showErr(id, msg){ const el=document.getElementById(id); el.textContent=msg; el.classList.add('on'); }
+
+async function doLogin(){
+  clearAuthErrors();
+  const login=document.getElementById('loginUser').value.trim();
+  const password=document.getElementById('loginPass').value;
+  if(!login||!password){ showErr('loginErr','Remplis tous les champs'); return; }
+  const btn=document.getElementById('loginBtn');
+  btn.disabled=true; btn.textContent='Connexion…';
+  try{
+    const r=await fetch(`${BACKEND}/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({login,password})});
+    const data=await r.json();
+    if(!r.ok){ showErr('loginErr',data.error||'Erreur'); return; }
+    setSession(data.user, data.token);
+    closeAuth(); toast(`Bienvenue ${data.user.login} !`,'ok');
+  }catch{ showErr('loginErr','Erreur réseau'); }
+  finally{ btn.disabled=false; btn.textContent='Se connecter'; }
+}
+
+async function doRegister(){
+  clearAuthErrors();
+  const login=document.getElementById('regLogin').value.trim();
+  const email=document.getElementById('regEmail').value.trim();
+  const password=document.getElementById('regPass').value;
+  let ok=true;
+  if(!login){ showErr('regLoginErr','Pseudo requis'); ok=false; }
+  if(!email||!email.includes('@')){ showErr('regEmailErr','Email invalide'); ok=false; }
+  if(password.length<6){ showErr('regPassErr','6 caractères minimum'); ok=false; }
+  if(!ok) return;
+  const btn=document.getElementById('regBtn');
+  btn.disabled=true; btn.textContent='Création…';
+  try{
+    const r=await fetch(`${BACKEND}/auth/register`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({login,email,password})});
+    const data=await r.json();
+    if(!r.ok){
+      if(data.error?.includes('Pseudo')) showErr('regLoginErr',data.error);
+      else if(data.error?.includes('Email')) showErr('regEmailErr',data.error);
+      else showErr('regPassErr',data.error||'Erreur');
+      return;
+    }
+    setSession(data.user, data.token);
+    closeAuth(); toast(`Compte créé ! Bienvenue ${data.user.login} 🎮`,'ok');
+  }catch{ showErr('regLoginErr','Erreur réseau'); }
+  finally{ btn.disabled=false; btn.textContent='Créer le compte'; }
+}
+
+function loginGitHub(){
+  fetch(`${BACKEND}/auth/github/url`).then(r=>r.json()).then(d=>window.location.href=d.url)
+    .catch(()=>toast('Backend non disponible','err'));
+}
+
+// ── PAGES ─────────────────────────────────────────────────
+function showPage(name, btn){
+  document.querySelectorAll('.ptab').forEach(b=>b.classList.remove('on')); btn.classList.add('on');
+  document.getElementById('pageVideos').style.display  = name==='videos'  ? 'block':'none';
+  document.getElementById('pageMembers').style.display = name==='members' ? 'block':'none';
+  if(name==='members') loadMembers();
+}
+
+// ── VIDEOS ────────────────────────────────────────────────
+async function loadVideos(){
+  try{
+    const r=await fetch(`${BACKEND}/api/videos`);
+    if(r.ok) videos=await r.json();
+  }catch{ videos=[]; }
+  render(); updateStats();
+}
+
+function canDelete(v){
+  if(!user) return false;
+  return user.login===v.author || user.role==='owner';
+}
+
+function render(){
+  const q=document.getElementById('searchIn').value.toLowerCase();
+  const list=videos.filter(v=>{
+    const d=v.difficulty||v.diff||'';
+    return(!activeFilter||d===activeFilter)&&(!q||v.title.toLowerCase().includes(q));
+  });
+  const g=document.getElementById('vgrid');
+  if(!list.length){
+    g.innerHTML=`<div class="empty"><div class="empty-shape">⬡</div><h3>${videos.length?'AUCUN RÉSULTAT':'AUCUNE VIDÉO'}</h3><p>${videos.length?'Essaie d\'autres filtres.':'Sois le premier à uploader un run.'}</p></div>`;
+    return;
+  }
+  g.innerHTML=list.map(v=>{
+    const d=v.difficulty||v.diff||'hard';
+    const src=v.url;
+    const date=new Date(v.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'});
+    const av=v.authorAvatar||`https://api.dicebear.com/7.x/pixel-art/svg?seed=${v.author}`;
+    const role=v.authorRole||(v.author===OWNER?'owner':'member');
+    const tagHtml=role==='owner'?`<span class="tag tag-owner">Owner</span>`:'';
+    const delBtn=canDelete(v)?`<button class="delete-btn visible" onclick="event.stopPropagation();deleteVideo('${v._id||v.id}',this)" title="Supprimer">✕</button>`:'';
+    return `<div class="vcard" onclick="openViewer('${v._id||v.id}')">
+      ${delBtn}
+      <div class="card-thumb">
+        ${src?`<video src="${src}" muted preload="metadata"></video>`:`<div class="thumb-blank"><svg width="52" height="52" viewBox="0 0 52 52" fill="none"><polygon points="26,3 49,15 49,37 26,49 3,37 3,15" stroke="#fff" stroke-width="1.2" fill="none"/><polygon points="26,13 39,20 39,32 26,39 13,32 13,20" stroke="#fff" stroke-width=".8" fill="none"/></svg></div>`}
+        <div class="card-overlay"><div class="play-tri"></div></div>
+        <div class="diff-pill ${DIFF_CLS[d]||'dh'}">${DIFF_NAME[d]||d}</div>
+      </div>
+      <div class="card-body">
+        <div class="card-title" title="${v.title}">${v.title}</div>
+        <div class="card-foot">
+          <div class="card-author" onclick="event.stopPropagation();openProfile('${v.author}')">
+            <img class="card-av" src="${av}" alt=""/>
+            <span class="card-aname">${v.author||'—'}</span>
+            ${tagHtml}
+          </div>
+          <span class="card-date">${date}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateStats(){
+  const authors=new Set(videos.map(v=>v.author));
+  document.getElementById('statV').textContent=videos.length;
+  document.getElementById('statU').textContent=authors.size;
+}
+
+async function deleteVideo(id, btn){
+  if(!confirm('Supprimer cette vidéo ?')) return;
+  try{
+    const r=await fetch(`${BACKEND}/api/videos/${id}`,{method:'DELETE',headers:authHeaders()});
+    if(!r.ok){ const d=await r.json(); toast(d.error||'Erreur','err'); return; }
+    videos=videos.filter(v=>(v._id||v.id)!==id);
+    render(); updateStats(); toast('Vidéo supprimée','ok');
+  }catch{ toast('Erreur réseau','err'); }
+}
+
+// ── FILTERS ───────────────────────────────────────────────
+document.querySelectorAll('.nav-tab').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.nav-tab').forEach(x=>x.classList.remove('on')); b.classList.add('on');
+  activeFilter=b.dataset.d;
+  document.querySelectorAll('.fb').forEach(x=>{x.classList.remove('on');if(x.dataset.d===activeFilter)x.classList.add('on')});
+  render();
+}));
+document.querySelectorAll('.fb').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.fb').forEach(x=>x.classList.remove('on')); b.classList.add('on');
+  activeFilter=b.dataset.d;
+  document.querySelectorAll('.nav-tab').forEach(x=>{x.classList.remove('on');if(x.dataset.d===activeFilter)x.classList.add('on')});
+  render();
+}));
+document.getElementById('searchIn').addEventListener('input',render);
+
+// ── MEMBERS ───────────────────────────────────────────────
+async function loadMembers(q=''){
+  try{
+    const r=await fetch(`${BACKEND}/api/members?q=${encodeURIComponent(q)}`);
+    if(r.ok) members=await r.json();
+  }catch{ members=[]; }
+  renderMembers();
+}
+function searchMembers(){ loadMembers(document.getElementById('memberSearch').value); }
+function renderMembers(){
+  const g=document.getElementById('mgrid');
+  if(!members.length){
+    g.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-shape">⬡</div><h3>AUCUN MEMBRE</h3><p>Personne ne s'est encore connecté.</p></div>`;
+    return;
+  }
+  g.innerHTML=members.map(m=>{
+    const role=m.role||(m.login===OWNER?'owner':'member');
+    const ringClass=role==='owner'?'owner-ring':'';
+    const tagHtml=role==='owner'?`<span class="tag tag-owner">Owner</span>`:`<span class="tag tag-member">Member</span>`;
+    return `<div class="mcard" onclick="openProfile('${m.login}')">
+      <img class="mcard-av ${ringClass}" src="${m.avatar_url||`https://api.dicebear.com/7.x/pixel-art/svg?seed=${m.login}`}" alt=""/>
+      <div class="mcard-name">${m.login}</div>
+      ${tagHtml}
+      <div class="mcard-stat">${m.videoCount||0} vidéo${m.videoCount!==1?'s':''}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── PROFILE ───────────────────────────────────────────────
+async function openProfile(login){
+  const m=members.find(x=>x.login===login)||{login,avatar_url:'',role:login===OWNER?'owner':'member'};
+  const role=m.role||(login===OWNER?'owner':'member');
+  document.getElementById('profileTitle').textContent=login.toUpperCase();
+  document.getElementById('profileName').textContent=login;
+  const av=document.getElementById('profileAv');
+  av.src=m.avatar_url||`https://api.dicebear.com/7.x/pixel-art/svg?seed=${login}`;
+  av.className='profile-av'+(role==='owner'?' owner-ring':'');
+  const tagEl=document.getElementById('profileTag');
+  tagEl.textContent=role==='owner'?'Owner':'Member';
+  tagEl.className='tag '+(role==='owner'?'tag-owner':'tag-member');
+  document.getElementById('profileSince').textContent=m.joinedAt?'Membre depuis '+new Date(m.joinedAt).toLocaleDateString('fr-FR',{month:'long',year:'numeric'}):'';
+  const pvids=document.getElementById('pvids');
+  pvids.innerHTML='<div class="pvid-empty">Chargement…</div>';
+  document.getElementById('profileOvl').classList.add('on');
+  try{
+    const r=await fetch(`${BACKEND}/api/members/${login}/videos`);
+    const uv=r.ok?await r.json():videos.filter(v=>v.author===login);
+    document.getElementById('profileVidsTitle').textContent=`${uv.length} run${uv.length!==1?'s':''}`;
+    if(!uv.length){pvids.innerHTML='<div class="pvid-empty">Aucun run uploadé.</div>';return;}
+    pvids.innerHTML=uv.map(v=>{
+      const d=v.difficulty||v.diff||'hard';
+      return `<div class="pvid-item" onclick="closeProfile();openViewer('${v._id||v.id}')">
+        <div class="pvid-thumb">${v.url?`<video src="${v.url}" muted preload="metadata"></video>`:`<svg width="20" height="20" viewBox="0 0 52 52" fill="none"><polygon points="26,3 49,15 49,37 26,49 3,37 3,15" stroke="#fff" stroke-width="1.5" fill="none"/></svg>`}</div>
+        <div class="pvid-info"><div class="pvid-title">${v.title}</div><div class="pvid-diff">${DIFF_NAME[d]||d}</div></div>
+      </div>`;
+    }).join('');
+  }catch{pvids.innerHTML='<div class="pvid-empty">Impossible de charger.</div>';}
+}
+function closeProfile(){document.getElementById('profileOvl').classList.remove('on');}
+
+// ── UPLOAD ────────────────────────────────────────────────
+function openUpload(){if(!user){openAuth();return;}document.getElementById('uploadOvl').classList.add('on');}
+function closeUpload(){document.getElementById('uploadOvl').classList.remove('on');resetForm();}
+function onFile(inp){
+  const f=inp.files[0];if(!f)return;pickedFile=f;
+  document.getElementById('dzIco').textContent='✅';
+  document.getElementById('dzMain').textContent=f.name.length>36?f.name.slice(0,36)+'…':f.name;
+  document.getElementById('dzHint').textContent=(f.size/1024/1024).toFixed(1)+' MB';
+}
+const dz=document.getElementById('dz');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over')});
+dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');const f=e.dataTransfer.files[0];if(f?.type.startsWith('video/')){pickedFile=f;document.getElementById('dzIco').textContent='✅';document.getElementById('dzMain').textContent=f.name.length>36?f.name.slice(0,36)+'…':f.name;document.getElementById('dzHint').textContent=(f.size/1024/1024).toFixed(1)+' MB';}});
+
+async function doUpload(){
+  if(!pickedFile){toast('Sélectionne une vidéo','err');return;}
+  const title=document.getElementById('uTitle').value.trim()||pickedFile.name.replace(/\.[^/.]+$/,'');
+  const diff=document.getElementById('uDiff').value;
+  const desc=document.getElementById('uDesc').value.trim();
+  const btn=document.getElementById('subBtn');
+  btn.disabled=true;btn.textContent='Upload en cours…';
+  document.getElementById('progWrap').style.display='block';
+  const bar=document.getElementById('progBar');
+  let pct=0;
+  const iv=setInterval(()=>{pct=Math.min(pct+Math.random()*11,87);bar.style.width=pct+'%'},160);
+  try{
+    const fd=new FormData();
+    fd.append('video',pickedFile);fd.append('title',title);fd.append('difficulty',diff);fd.append('description',desc);
+    const r=await fetch(`${BACKEND}/api/videos`,{method:'POST',headers:authHeaders(),body:fd});
+    if(!r.ok){const d=await r.json();throw new Error(d.error||'Erreur');}
+    const {video:v}=await r.json();
+    videos.unshift(v);
+    clearInterval(iv);bar.style.width='100%';
+    await new Promise(r=>setTimeout(r,300));
+    closeUpload();render();updateStats();toast('Run publié !','ok');
+  }catch(e){clearInterval(iv);toast(e.message||'Erreur upload','err');}
+  finally{btn.disabled=false;btn.textContent='Publier le run';document.getElementById('progWrap').style.display='none';bar.style.width='0';}
+}
+function resetForm(){pickedFile=null;document.getElementById('fileIn').value='';document.getElementById('dzIco').textContent='🎬';document.getElementById('dzMain').textContent='Glisse ta vidéo ici';document.getElementById('dzHint').textContent='MP4 · MOV · WebM · 500 MB max';document.getElementById('uTitle').value='';document.getElementById('uDesc').value='';}
+
+// ── VIEWER ────────────────────────────────────────────────
+function openViewer(id){
+  const v=videos.find(x=>(x._id||x.id)===id);if(!v)return;
+  const d=v.difficulty||v.diff||'hard';
+  document.getElementById('vTtl').textContent=v.title;
+  document.getElementById('vAuthor').textContent=v.author||'—';
+  document.getElementById('vDate').textContent=new Date(v.date).toLocaleDateString('fr-FR');
+  document.getElementById('vDiff').textContent=DIFF_NAME[d]||d;
+  const vid=document.getElementById('mainVid');
+  vid.src=v.url||'';vid.style.display=v.url?'block':'none';
+  document.getElementById('viewerOvl').classList.add('on');
+}
+function closeViewer(){document.getElementById('viewerOvl').classList.remove('on');const v=document.getElementById('mainVid');v.pause();v.src='';}
+
+// ── TOAST ─────────────────────────────────────────────────
+function toast(msg,type=''){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast ${type} on`;clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),3200);}
+
+// ── KEYBOARD ──────────────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape')return;
+  closeViewer();closeUpload();closeAuth();closeProfile();
+});
+['authOvl','uploadOvl','viewerOvl','profileOvl'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',e=>{
+    if(e.target.id!==id)return;
+    if(id==='viewerOvl')closeViewer();
+    else if(id==='uploadOvl')closeUpload();
+    else if(id==='profileOvl')closeProfile();
+    else closeAuth();
+  });
+});
+
+// Enter key in auth fields
+document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+document.getElementById('regPass').addEventListener('keydown',e=>{if(e.key==='Enter')doRegister();});
+</script>
+</body>
+</html>
