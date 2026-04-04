@@ -1,18 +1,27 @@
-const express    = require('express');
-const multer     = require('multer');
-const axios      = require('axios');
-const cors       = require('cors');
-const path       = require('path');
-const fs         = require('fs');
-const bcrypt     = require('bcryptjs');
-const jwt        = require('jsonwebtoken');
-const mongoose   = require('mongoose');
+const express     = require('express');
+const multer      = require('multer');
+const axios       = require('axios');
+const cors        = require('cors');
+const path        = require('path');
+const fs          = require('fs');
+const bcrypt      = require('bcryptjs');
+const jwt         = require('jsonwebtoken');
+const mongoose    = require('mongoose');
+const cloudinary  = require('cloudinary').v2;
+const streamifier = require('streamifier');
 require('dotenv').config();
 
 const app = express();
 app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:3000', credentials: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// ── Cloudinary ─────────────────────────────────────────────
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key:    process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 // ── MongoDB ────────────────────────────────────────────────
 mongoose.connect(process.env.MONGO_URI)
@@ -25,7 +34,7 @@ const OWNER = 'Tetedecitron';
 const userSchema = new mongoose.Schema({
   login:      { type: String, required: true, unique: true },
   email:      { type: String, sparse: true },
-  password:   { type: String },           // null pour les comptes GitHub
+  password:   { type: String },
   avatar_url: { type: String, default: '' },
   role:       { type: String, default: 'member' },
   githubId:   { type: Number, sparse: true },
@@ -33,42 +42,34 @@ const userSchema = new mongoose.Schema({
 });
 
 const videoSchema = new mongoose.Schema({
-  title:       { type: String, required: true },
-  difficulty:  { type: String, default: 'insane' },
-  description: { type: String, default: '' },
-  author:      { type: String, required: true },
-  authorAvatar:{ type: String, default: '' },
-  authorRole:  { type: String, default: 'member' },
-  filename:    { type: String },
-  url:         { type: String },
-  size:        { type: Number, default: 0 },
-  date:        { type: Date, default: Date.now },
-  views:       { type: Number, default: 0 }
+  title:        { type: String, required: true },
+  difficulty:   { type: String, default: 'extremedemon' },
+  description:  { type: String, default: '' },
+  author:       { type: String, required: true },
+  authorAvatar: { type: String, default: '' },
+  authorRole:   { type: String, default: 'member' },
+  cloudinaryId: { type: String },   // public_id sur Cloudinary
+  url:          { type: String },   // URL de lecture
+  size:         { type: Number, default: 0 },
+  date:         { type: Date, default: Date.now },
+  views:        { type: Number, default: 0 }
 });
 
-const User  = mongoose.model('User', userSchema);
+const User  = mongoose.model('User',  userSchema);
 const Video = mongoose.model('Video', videoSchema);
 
-// ── Uploads ────────────────────────────────────────────────
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
-
-const storage = multer.diskStorage({
-  destination: uploadDir,
-  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname.replace(/\s/g,'_')}`)
-});
+// ── Multer (mémoire, pas disque) ───────────────────────────
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 500 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('video/')) cb(null, true);
     else cb(new Error('Fichier vidéo requis'));
   }
 });
-app.use('/uploads', express.static(uploadDir));
 
 // ── JWT ────────────────────────────────────────────────────
-const JWT_SECRET = process.env.JWT_SECRET || 'gdvault_secret_change_this';
+const JWT_SECRET = process.env.JWT_SECRET || 'gdvault_secret';
 
 function makeToken(user) {
   return jwt.sign({ id: user._id, login: user.login, role: user.role }, JWT_SECRET, { expiresIn: '30d' });
@@ -77,30 +78,15 @@ function makeToken(user) {
 function authMiddleware(req, res, next) {
   const header = req.headers.authorization;
   if (!header) return res.status(401).json({ error: 'Non authentifié' });
-  try {
-    req.user = jwt.verify(header.replace('Bearer ', ''), JWT_SECRET);
-    next();
-  } catch { res.status(401).json({ error: 'Token invalide' }); }
+  try { req.user = jwt.verify(header.replace('Bearer ', ''), JWT_SECRET); next(); }
+  catch { res.status(401).json({ error: 'Token invalide' }); }
 }
 
-function optionalAuth(req, res, next) {
-  const header = req.headers.authorization;
-  if (header) {
-    try { req.user = jwt.verify(header.replace('Bearer ', ''), JWT_SECRET); } catch {}
-  }
-  next();
-}
-
-// ── Helper ────────────────────────────────────────────────
+// ── Helper ─────────────────────────────────────────────────
 async function ensureUser(login, avatar_url, githubId) {
   let u = await User.findOne({ login });
   if (!u) {
-    u = await User.create({
-      login,
-      avatar_url: avatar_url || '',
-      githubId: githubId || null,
-      role: login === OWNER ? 'owner' : 'member'
-    });
+    u = await User.create({ login, avatar_url: avatar_url || '', githubId: githubId || null, role: login === OWNER ? 'owner' : 'member' });
   } else {
     if (avatar_url) u.avatar_url = avatar_url;
     if (login === OWNER) u.role = 'owner';
@@ -109,52 +95,45 @@ async function ensureUser(login, avatar_url, githubId) {
   return u;
 }
 
-// ── AUTH — Email/Password ─────────────────────────────────
+// Upload buffer → Cloudinary
+function uploadToCloudinary(buffer, filename) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { resource_type: 'video', folder: 'gdvault', public_id: `${Date.now()}-${filename}`, chunk_size: 6000000 },
+      (err, result) => { if (err) reject(err); else resolve(result); }
+    );
+    streamifier.createReadStream(buffer).pipe(stream);
+  });
+}
 
-// POST /auth/register
+// ── AUTH — Email/Password ──────────────────────────────────
 app.post('/auth/register', async (req, res) => {
   try {
     const { login, email, password } = req.body;
     if (!login || !email || !password) return res.status(400).json({ error: 'Champs manquants' });
     if (password.length < 6) return res.status(400).json({ error: 'Mot de passe trop court (6 min)' });
-
     const exists = await User.findOne({ $or: [{ login }, { email }] });
     if (exists) return res.status(409).json({ error: exists.login === login ? 'Pseudo déjà pris' : 'Email déjà utilisé' });
-
     const hashed = await bcrypt.hash(password, 10);
     const avatar_url = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${login}`;
-    const user = await User.create({
-      login, email, password: hashed, avatar_url,
-      role: login === OWNER ? 'owner' : 'member'
-    });
-
-    const token = makeToken(user);
-    res.json({ token, user: { login: user.login, avatar_url: user.avatar_url, role: user.role } });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+    const user = await User.create({ login, email, password: hashed, avatar_url, role: login === OWNER ? 'owner' : 'member' });
+    res.json({ token: makeToken(user), user: { login: user.login, avatar_url: user.avatar_url, role: user.role } });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// POST /auth/login
 app.post('/auth/login', async (req, res) => {
   try {
     const { login, password } = req.body;
     if (!login || !password) return res.status(400).json({ error: 'Champs manquants' });
-
     const user = await User.findOne({ $or: [{ login }, { email: login }] });
     if (!user || !user.password) return res.status(401).json({ error: 'Compte introuvable ou connexion GitHub requise' });
-
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return res.status(401).json({ error: 'Mot de passe incorrect' });
-
-    const token = makeToken(user);
-    res.json({ token, user: { login: user.login, avatar_url: user.avatar_url, role: user.role } });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+    res.json({ token: makeToken(user), user: { login: user.login, avatar_url: user.avatar_url, role: user.role } });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ── AUTH — GitHub OAuth ───────────────────────────────────
+// ── AUTH — GitHub OAuth ────────────────────────────────────
 app.get('/auth/github/url', (req, res) => {
   const params = new URLSearchParams({
     client_id: process.env.GITHUB_CLIENT_ID,
@@ -175,18 +154,14 @@ app.get('/auth/callback', async (req, res) => {
       code,
       redirect_uri: `${process.env.BACKEND_URL || 'http://localhost:3000'}/auth/callback`
     }, { headers: { Accept: 'application/json' } });
-
     const { access_token } = tokenRes.data;
     if (!access_token) throw new Error('Token vide');
-
     const userRes = await axios.get('https://api.github.com/user', {
       headers: { Authorization: `Bearer ${access_token}`, 'User-Agent': 'GDVault' }
     });
-
     const { login, avatar_url, id } = userRes.data;
     const user = await ensureUser(login, avatar_url, id);
     const token = makeToken(user);
-
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     res.redirect(`${frontendUrl}?token=${encodeURIComponent(token)}&user=${encodeURIComponent(JSON.stringify({ login: user.login, avatar_url: user.avatar_url, role: user.role }))}`);
   } catch (err) {
@@ -195,9 +170,7 @@ app.get('/auth/callback', async (req, res) => {
   }
 });
 
-// ── VIDEOS ────────────────────────────────────────────────
-
-// GET /api/videos
+// ── VIDEOS ─────────────────────────────────────────────────
 app.get('/api/videos', async (req, res) => {
   try {
     const { diff, q } = req.query;
@@ -209,51 +182,44 @@ app.get('/api/videos', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// POST /api/videos
 app.post('/api/videos', authMiddleware, upload.single('video'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Aucun fichier reçu' });
     const { title, difficulty, description } = req.body;
     const user = await User.findOne({ login: req.user.login });
 
+    // Upload vers Cloudinary
+    const result = await uploadToCloudinary(req.file.buffer, req.file.originalname.replace(/\s/g, '_'));
+
     const video = await Video.create({
       title: title || req.file.originalname,
-      difficulty: difficulty || 'insane',
+      difficulty: difficulty || 'extremedemon',
       description: description || '',
       author: req.user.login,
       authorAvatar: user?.avatar_url || '',
       authorRole: req.user.role,
-      filename: req.file.filename,
-      url: `/uploads/${req.file.filename}`,
+      cloudinaryId: result.public_id,
+      url: result.secure_url,
       size: req.file.size
     });
     res.json({ success: true, video });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// DELETE /api/videos/:id
 app.delete('/api/videos/:id', authMiddleware, async (req, res) => {
   try {
     const video = await Video.findById(req.params.id);
     if (!video) return res.status(404).json({ error: 'Vidéo introuvable' });
-
-    // Seul l'auteur ou l'owner peut supprimer
-    if (video.author !== req.user.login && req.user.role !== 'owner') {
-      return res.status(403).json({ error: 'Interdit' });
-    }
-
-    if (video.filename) {
-      const fp = path.join(uploadDir, video.filename);
-      if (fs.existsSync(fp)) fs.unlinkSync(fp);
+    if (video.author !== req.user.login && req.user.role !== 'owner') return res.status(403).json({ error: 'Interdit' });
+    if (video.cloudinaryId) {
+      await cloudinary.uploader.destroy(video.cloudinaryId, { resource_type: 'video' });
     }
     await Video.findByIdAndDelete(req.params.id);
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ── MEMBERS ───────────────────────────────────────────────
-
-// GET /api/members?q=
+// ── MEMBERS ────────────────────────────────────────────────
 app.get('/api/members', async (req, res) => {
   try {
     const { q } = req.query;
@@ -266,52 +232,33 @@ app.get('/api/members', async (req, res) => {
     ]);
     const countMap = {};
     counts.forEach(c => countMap[c._id] = c.count);
-
     const result = users.map(u => ({
-      login: u.login,
-      avatar_url: u.avatar_url,
-      role: u.role,
-      joinedAt: u.joinedAt,
-      videoCount: countMap[u.login] || 0
+      login: u.login, avatar_url: u.avatar_url, role: u.role,
+      joinedAt: u.joinedAt, videoCount: countMap[u.login] || 0
     }));
-    // owner toujours en premier
-    result.sort((a, b) => {
-      if (a.role === 'owner') return -1;
-      if (b.role === 'owner') return 1;
-      return a.login.localeCompare(b.login);
-    });
+    result.sort((a, b) => { if (a.role === 'owner') return -1; if (b.role === 'owner') return 1; return a.login.localeCompare(b.login); });
     res.json(result);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// DELETE /api/members/:login — Owner only
-app.delete('/api/members/:login', authMiddleware, async (req, res) => {
-  try {
-    if (req.user.role !== 'owner') return res.status(403).json({ error: 'Réservé au Owner' });
-    if (req.params.login === OWNER) return res.status(400).json({ error: 'Impossible de supprimer le Owner' });
-
-    // Supprime l'utilisateur
-    await User.findOneAndDelete({ login: req.params.login });
-
-    // Supprime ses vidéos + fichiers
-    const userVideos = await Video.find({ author: req.params.login });
-    for (const v of userVideos) {
-      if (v.filename) {
-        const fp = path.join(uploadDir, v.filename);
-        if (fs.existsSync(fp)) fs.unlinkSync(fp);
-      }
-    }
-    await Video.deleteMany({ author: req.params.login });
-
-    res.json({ success: true });
-  } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-// GET /api/members/:login/videos
 app.get('/api/members/:login/videos', async (req, res) => {
   try {
     const vids = await Video.find({ author: req.params.login }).sort({ date: -1 });
     res.json(vids);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/members/:login', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'owner') return res.status(403).json({ error: 'Réservé au Owner' });
+    if (req.params.login === OWNER) return res.status(400).json({ error: 'Impossible de supprimer le Owner' });
+    await User.findOneAndDelete({ login: req.params.login });
+    const userVideos = await Video.find({ author: req.params.login });
+    for (const v of userVideos) {
+      if (v.cloudinaryId) await cloudinary.uploader.destroy(v.cloudinaryId, { resource_type: 'video' }).catch(() => {});
+    }
+    await Video.deleteMany({ author: req.params.login });
+    res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
