@@ -284,6 +284,29 @@ app.get('/api/members', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// DELETE /api/members/:login — Owner only
+app.delete('/api/members/:login', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'owner') return res.status(403).json({ error: 'Réservé au Owner' });
+    if (req.params.login === OWNER) return res.status(400).json({ error: 'Impossible de supprimer le Owner' });
+
+    // Supprime l'utilisateur
+    await User.findOneAndDelete({ login: req.params.login });
+
+    // Supprime ses vidéos + fichiers
+    const userVideos = await Video.find({ author: req.params.login });
+    for (const v of userVideos) {
+      if (v.filename) {
+        const fp = path.join(uploadDir, v.filename);
+        if (fs.existsSync(fp)) fs.unlinkSync(fp);
+      }
+    }
+    await Video.deleteMany({ author: req.params.login });
+
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // GET /api/members/:login/videos
 app.get('/api/members/:login/videos', async (req, res) => {
   try {
